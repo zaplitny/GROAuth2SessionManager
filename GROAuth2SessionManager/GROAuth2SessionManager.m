@@ -37,6 +37,7 @@ NSString * const kGROAuthRefreshGrantType = @"refresh_token";
 @property (readwrite, nonatomic) NSString *secret;
 @property (readwrite, nonatomic) NSURL *oAuthURL;
 
+
 @end
 
 #pragma mark - GROAuth2SessionManager
