@@ -28,6 +28,13 @@ NSString * const kGROAuthClientCredentialsGrantType = @"client_credentials";
 NSString * const kGROAuthPasswordCredentialsGrantType = @"password";
 NSString * const kGROAuthRefreshGrantType = @"refresh_token";
 
+NSString * const kCCSErrorInvalidAccessToken    = @"Invalid access token";
+NSString * const kCCSErrorInvalidRefreshToken   = @"Invalid refresh token";
+NSString * const kCCSErrorExpiredAccessToken    = @"Access token expired";
+NSString * const kCCSErrorResponseObjectKey     = @"com.alamofire.serialization.response.error.response";
+NSString * const kCCSErrorAuthenticateObjectKey = @"Www-Authenticate";
+NSString * const kCCSErrorInvalidString         = @"invalid_token";
+
 #pragma mark GROAuth2SessionManager (Private)
 
 @interface GROAuth2SessionManager ()
@@ -36,7 +43,6 @@ NSString * const kGROAuthRefreshGrantType = @"refresh_token";
 @property (readwrite, nonatomic) NSString *clientID;
 @property (readwrite, nonatomic) NSString *secret;
 @property (readwrite, nonatomic) NSURL *oAuthURL;
-
 
 @end
 
@@ -92,12 +98,13 @@ NSString * const kGROAuthRefreshGrantType = @"refresh_token";
 
 #pragma mark - Authentication
 
-- (void)authenticateUsingOAuthWithPath:(NSString *)path username:(NSString *)username password:(NSString *)password scope:(NSString *)scope success:(void (^)(AFOAuthCredential *))success failure:(void (^)(NSError *))failure {
+- (void)authenticateUsingOAuthWithPath:(NSString *)path username:(NSString *)username password:(NSString *)password success:(void (^)(AFOAuthCredential *))success failure:(void (^)(NSError *))failure {
     NSMutableDictionary *mutableParameters = [NSMutableDictionary dictionary];
     [mutableParameters setObject:kGROAuthPasswordCredentialsGrantType forKey:@"grant_type"];
     [mutableParameters setValue:username forKey:@"username"];
     [mutableParameters setValue:password forKey:@"password"];
-    [mutableParameters setValue:scope forKey:@"scope"];
+    
+    [self.requestSerializer setAuthorizationHeaderFieldWithUsername:[self clientID] password:[self secret]];
 
     NSDictionary *parameters = [NSDictionary dictionaryWithDictionary:mutableParameters];
 
@@ -118,6 +125,7 @@ NSString * const kGROAuthRefreshGrantType = @"refresh_token";
     NSMutableDictionary *mutableParameters = [NSMutableDictionary dictionary];
     [mutableParameters setObject:kGROAuthRefreshGrantType forKey:@"grant_type"];
     [mutableParameters setValue:refreshToken forKey:@"refresh_token"];
+    [self.requestSerializer setAuthorizationHeaderFieldWithUsername:[self clientID] password:[self secret]];
 
     NSDictionary *parameters = [NSDictionary dictionaryWithDictionary:mutableParameters];
 
@@ -137,8 +145,6 @@ NSString * const kGROAuthRefreshGrantType = @"refresh_token";
 
 - (void)authenticateUsingOAuthWithPath:(NSString *)path parameters:(NSDictionary *)parameters success:(void (^)(AFOAuthCredential *))success failure:(void (^)(NSError *))failure {
     NSMutableDictionary *mutableParameters = [NSMutableDictionary dictionaryWithDictionary:parameters];
-    [mutableParameters setObject:[self clientID] forKey:@"client_id"];
-    [mutableParameters setValue:[self secret] forKey:@"client_secret"];
 
     parameters = [NSDictionary dictionaryWithDictionary:mutableParameters];
 
@@ -150,12 +156,18 @@ NSString * const kGROAuthRefreshGrantType = @"refresh_token";
     }
 
     NSError *error;
-    NSMutableURLRequest *mutableRequest = [self.requestSerializer requestWithMethod:@"POST" URLString:urlString parameters:parameters error:&error];
+    
+    
+    NSMutableURLRequest *mutableRequest = [self.requestSerializer requestWithMethod:@"POST"
+                                                                          URLString:urlString
+                                                                         parameters:parameters
+                                                                              error:&error];
     if (error) {
         failure(error);
 
         return;
     }
+    
 
     AFHTTPRequestOperation *requestOperation = [[AFHTTPRequestOperation alloc] initWithRequest:mutableRequest];
     [requestOperation setResponseSerializer:[AFJSONResponseSerializer serializer]];
@@ -175,7 +187,8 @@ NSString * const kGROAuthRefreshGrantType = @"refresh_token";
             refreshToken = [parameters valueForKey:@"refresh_token"];
         }
 
-        AFOAuthCredential *credential = [AFOAuthCredential credentialWithOAuthToken:[responseObject valueForKey:@"access_token"] tokenType:[responseObject valueForKey:@"token_type"]];
+        AFOAuthCredential *credential = [AFOAuthCredential credentialWithOAuthToken:[responseObject valueForKey:@"access_token"]
+                                                                          tokenType:[responseObject valueForKey:@"token_type"]];
 
         NSDate *expireDate = [NSDate distantFuture];
         id expiresIn = [responseObject valueForKey:@"expires_in"];
@@ -198,5 +211,7 @@ NSString * const kGROAuthRefreshGrantType = @"refresh_token";
 
     [requestOperation start];
 }
+
+
 
 @end
