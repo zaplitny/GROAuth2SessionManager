@@ -28,13 +28,6 @@ NSString * const kGROAuthClientCredentialsGrantType = @"client_credentials";
 NSString * const kGROAuthPasswordCredentialsGrantType = @"password";
 NSString * const kGROAuthRefreshGrantType = @"refresh_token";
 
-NSString * const kCCSErrorInvalidAccessToken    = @"Invalid access token";
-NSString * const kCCSErrorInvalidRefreshToken   = @"Invalid refresh token";
-NSString * const kCCSErrorExpiredAccessToken    = @"Access token expired";
-NSString * const kCCSErrorResponseObjectKey     = @"com.alamofire.serialization.response.error.response";
-NSString * const kCCSErrorAuthenticateObjectKey = @"Www-Authenticate";
-NSString * const kCCSErrorInvalidString         = @"invalid_token";
-
 #pragma mark GROAuth2SessionManager (Private)
 
 @interface GROAuth2SessionManager ()
