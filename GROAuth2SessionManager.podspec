@@ -26,6 +26,6 @@ Pod::Spec.new do |s|
     #endif'
   
 # Pod Dependencies
-  s.dependencies = {'AFNetworking' => ['~> 2.3.1']}
+  s.dependencies = {'AFNetworking' => ['~> 2.4']}
   
 end
